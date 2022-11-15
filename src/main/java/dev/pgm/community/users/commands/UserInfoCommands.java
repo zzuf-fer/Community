@@ -6,26 +6,21 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.translatable;
 import static tc.oc.pgm.util.text.TemporalComponent.relativePastApproximate;
 
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandCompletion;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Dependency;
-import co.aikar.commands.annotation.Description;
-import co.aikar.commands.annotation.Optional;
-import co.aikar.commands.annotation.Syntax;
+import cloud.commandframework.annotations.Argument;
+import cloud.commandframework.annotations.CommandDescription;
+import cloud.commandframework.annotations.CommandMethod;
+import cloud.commandframework.annotations.CommandPermission;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import dev.pgm.community.CommunityCommand;
 import dev.pgm.community.CommunityPermissions;
+import dev.pgm.community.feature.FeatureManager;
 import dev.pgm.community.friends.feature.FriendshipFeature;
 import dev.pgm.community.moderation.feature.ModerationFeature;
 import dev.pgm.community.users.feature.UsersFeature;
 import dev.pgm.community.utils.BroadcastUtils;
 import dev.pgm.community.utils.CommandAudience;
 import dev.pgm.community.utils.MessageUtils;
-import dev.pgm.community.utils.WebUtils;
-import dev.pgm.community.utils.WebUtils.NameEntry;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -50,61 +45,20 @@ import tc.oc.pgm.util.text.formatting.PaginatedComponentResults;
 
 public class UserInfoCommands extends CommunityCommand {
 
-  @Dependency private UsersFeature users;
-  @Dependency private ModerationFeature moderation;
-  @Dependency private FriendshipFeature friends;
+  private final UsersFeature users;
+  private final ModerationFeature moderation;
+  private final FriendshipFeature friends;
 
-  @CommandAlias("usernamehistory|uh")
-  @Description("View the name history of a user")
-  @Syntax("[player]")
-  @CommandCompletion("@players")
-  @CommandPermission(CommunityPermissions.LOOKUP_OTHERS)
-  public void usernameHistory(CommandAudience audience, String target) {
-    WebUtils.getUsernameHistory(target)
-        .thenAcceptAsync(
-            history -> {
-              Component username = text(history.getCurrentName(), NamedTextColor.AQUA);
-
-              if (history.getHistory().isEmpty()) {
-                audience.sendWarning(
-                    text()
-                        .append(username)
-                        .append(text(" has never changed their username.", NamedTextColor.GRAY))
-                        .build());
-                return;
-              }
-
-              Component headerText =
-                  text()
-                      .append(text("Username History", NamedTextColor.YELLOW))
-                      .append(text(" - ", NamedTextColor.GRAY))
-                      .append(username)
-                      .build();
-              audience.sendMessage(
-                  TextFormatter.horizontalLineHeading(
-                      audience.getSender(), headerText, NamedTextColor.GRAY));
-
-              int i = 1;
-              for (NameEntry name : history.getHistory()) {
-                audience.sendMessage(
-                    text()
-                        .append(text(i++ + ". ", NamedTextColor.WHITE))
-                        .append(text(name.getUsername(), NamedTextColor.YELLOW))
-                        .append(BroadcastUtils.BROADCAST_DIV)
-                        .append(
-                            TemporalComponent.relativePastApproximate(name.getDateChanged())
-                                .color(NamedTextColor.DARK_AQUA))
-                        .build());
-              }
-            });
+  public UserInfoCommands(FeatureManager features) {
+    this.users = features.getUsers();
+    this.moderation = features.getModeration();
+    this.friends = features.getFriendships();
   }
 
-  @CommandAlias("seen|lastseen|find")
-  @Description("View when a player was last online")
-  @Syntax("[player]")
-  @CommandCompletion("@visible")
+  @CommandMethod("seen|lastseen|find <target>")
+  @CommandDescription("View when a player was last online")
   @CommandPermission(CommunityPermissions.FIND)
-  public void seenPlayer(CommandAudience audience, String target) {
+  public void seenPlayer(CommandAudience audience, @Argument("target") String target) {
     boolean staff = audience.hasPermission(CommunityPermissions.STAFF);
     boolean findAnyone = audience.hasPermission(CommunityPermissions.FIND_ANYONE);
 
@@ -159,12 +113,10 @@ public class UserInfoCommands extends CommunityCommand {
         });
   }
 
-  @CommandAlias("alts|alternateaccounts")
-  @Description("View a list of alternate accounts of a player")
-  @CommandCompletion("@players")
-  @Syntax("[target]")
+  @CommandMethod("alts|alternateaccounts [target]")
+  @CommandDescription("View a list of alternate accounts of a player")
   @CommandPermission(CommunityPermissions.LOOKUP_OTHERS)
-  public void viewAlts(CommandAudience audience, @Optional String target) {
+  public void viewAlts(CommandAudience audience, @Argument("target") String target) {
     if (target == null) {
       showOnlineAlts(audience, 1);
       showBannedAlts(audience, 1);
@@ -275,13 +227,13 @@ public class UserInfoCommands extends CommunityCommand {
             });
   }
 
-  @CommandAlias("profile|user")
-  @Description("View account info for a player")
-  @Syntax("(name | uuid)")
-  @CommandCompletion("@players")
+  @CommandMethod("profile|user <target> [all]")
+  @CommandDescription("View account info for a player")
   @CommandPermission(CommunityPermissions.LOOKUP_OTHERS)
   public void viewUserProfile(
-      CommandAudience audience, String target, @Default("false") boolean viewAll) {
+      CommandAudience audience,
+      @Argument("target") String target,
+      @Argument(value = "all", defaultValue = "false") boolean viewAll) {
     users.findUserWithSession(
         target,
         false,

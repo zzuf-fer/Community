@@ -3,11 +3,10 @@ package dev.pgm.community.commands;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.translatable;
 
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Description;
-import co.aikar.commands.annotation.Optional;
-import co.aikar.commands.annotation.Syntax;
+import cloud.commandframework.annotations.Argument;
+import cloud.commandframework.annotations.CommandDescription;
+import cloud.commandframework.annotations.CommandMethod;
+import cloud.commandframework.annotations.CommandPermission;
 import com.google.common.collect.Maps;
 import dev.pgm.community.CommunityCommand;
 import dev.pgm.community.CommunityPermissions;
@@ -23,12 +22,13 @@ import tc.oc.pgm.util.StringUtils;
 
 public class GamemodeCommand extends CommunityCommand {
 
-  @CommandAlias("gamemode|gm")
-  @Description("Adjust your or another player's gamemode")
-  @Syntax("<gamemode> " + SELECTION)
+  @CommandMethod("gamemode|gm [gamemode] [targets]")
+  @CommandDescription("Adjust your or another player's gamemode")
   @CommandPermission(CommunityPermissions.GAMEMODE)
   public void gamemode(
-      CommandAudience viewer, @Optional String gamemode, @Optional String targets) {
+      CommandAudience viewer,
+      @Argument("gamemode") String gamemode,
+      @Argument("targets") String targets) {
     Player player = viewer.getPlayer();
     // /gm <gamemode>
     if (gamemode == null && targets == null) {
@@ -79,7 +79,7 @@ public class GamemodeCommand extends CommunityCommand {
     } else {
       Map<String, GameMode> names = Maps.newHashMap();
       Stream.of(GameMode.values()).forEach(gm -> names.put(gm.name().toLowerCase(), gm));
-      GameMode gmMatch = StringUtils.bestFuzzyMatch(input.toLowerCase(), names, 0.5);
+      GameMode gmMatch = StringUtils.bestFuzzyMatch(input.toLowerCase(), names);
       gamemode = gmMatch != null ? gmMatch : def;
     }
     return gamemode;

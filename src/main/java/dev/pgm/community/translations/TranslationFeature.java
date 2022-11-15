@@ -2,8 +2,6 @@ package dev.pgm.community.translations;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Sets;
-import dev.pgm.community.CommunityCommand;
 import dev.pgm.community.feature.FeatureBase;
 import dev.pgm.community.utils.PGMUtils;
 import dev.pgm.community.utils.WebUtils;
@@ -37,13 +35,6 @@ public class TranslationFeature extends FeatureBase {
     return (TranslationConfig) getConfig();
   }
 
-  @Override
-  public Set<CommunityCommand> getCommands() {
-    return getTranslationConfig().isEnabled()
-        ? Sets.newHashSet(new TranslationCommand())
-        : Sets.newHashSet();
-  }
-
   public Set<String> getOnlineLanguages() {
     return Bukkit.getOnlinePlayers().stream()
         .map(Translation::getPlayerLanguageCode)
@@ -60,8 +51,7 @@ public class TranslationFeature extends FeatureBase {
         .collect(Collectors.toList());
   }
 
-  public CompletableFuture<Translation> translate(
-      Player sender, String message, Set<String> languages) {
+  public CompletableFuture<Translation> translate(String message, Set<String> languages) {
     if (languages.size() < 2) {
       // If there under 2 languages, no need to translate the message
       return CompletableFuture.completedFuture(new Translation(message));

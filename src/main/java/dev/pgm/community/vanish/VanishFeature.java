@@ -2,7 +2,6 @@ package dev.pgm.community.vanish;
 
 import com.google.common.collect.Sets;
 import dev.pgm.community.Community;
-import dev.pgm.community.CommunityCommand;
 import dev.pgm.community.feature.FeatureBase;
 import dev.pgm.community.nick.feature.NickFeature;
 import dev.pgm.community.utils.PGMUtils;
@@ -72,11 +71,6 @@ public class VanishFeature extends FeatureBase {
 
   public Set<UUID> getVanishedPlayers() {
     return vanishedPlayers;
-  }
-
-  @Override
-  public Set<CommunityCommand> getCommands() {
-    return Sets.newHashSet(); // Vanish command is in PGM
   }
 
   private boolean isPGMEnabled() {

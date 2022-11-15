@@ -2,13 +2,15 @@ package dev.pgm.community.translations;
 
 import static net.kyori.adventure.text.Component.text;
 
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Dependency;
-import co.aikar.commands.annotation.Description;
+import cloud.commandframework.annotations.Argument;
+import cloud.commandframework.annotations.CommandDescription;
+import cloud.commandframework.annotations.CommandMethod;
+import cloud.commandframework.annotations.CommandPermission;
+import cloud.commandframework.annotations.Flag;
+import cloud.commandframework.annotations.specifier.Greedy;
 import dev.pgm.community.CommunityCommand;
 import dev.pgm.community.CommunityPermissions;
+import dev.pgm.community.feature.FeatureManager;
 import dev.pgm.community.utils.CommandAudience;
 import java.util.List;
 import java.util.Set;
@@ -24,14 +26,18 @@ import tc.oc.pgm.util.text.TextFormatter;
 
 public class TranslationCommand extends CommunityCommand {
 
-  @Dependency private TranslationFeature translate;
+  private final TranslationFeature translate;
 
-  @CommandAlias("translate")
-  @Description("Translate the given chat message")
+  public TranslationCommand(FeatureManager features) {
+    this.translate = features.getTranslations();
+  }
+
+  @CommandMethod("translate <text>")
+  @CommandDescription("Translate the given chat message")
   @CommandPermission(CommunityPermissions.TRANSLATE)
-  public void translate(CommandAudience audience, Player player, String text) {
+  public void translate(CommandAudience audience, @Argument("text") @Greedy String text) {
     translate
-        .translate(player, text, translate.getAcceptedLanguages())
+        .translate(text, translate.getAcceptedLanguages())
         .thenAcceptAsync(
             translation -> {
               audience.sendMessage(
@@ -61,10 +67,11 @@ public class TranslationCommand extends CommunityCommand {
             });
   }
 
-  @CommandAlias("languages")
-  @Description("View a list of online languages")
+  @CommandMethod("languages")
+  @CommandDescription("View a list of online languages")
   @CommandPermission(CommunityPermissions.TRANSLATE)
-  public void languages(CommandAudience audience, @Default("false") boolean minimal) {
+  public void languages(
+      CommandAudience audience, @Flag(value = "minimal", aliases = "m") boolean minimal) {
     Set<String> languages = translate.getOnlineLanguages();
     audience.sendMessage(
         text()
